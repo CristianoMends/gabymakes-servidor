@@ -1,4 +1,5 @@
 import { Address } from 'src/address/entities/address.entity';
+import { CartItem } from 'src/cart-item/entities/cart-item.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 @Entity('users')
@@ -32,4 +33,7 @@ export class User {
 
     @OneToMany(() => Address, address => address.user)
     addresses: Address[];
+
+    @OneToMany(() => CartItem, cartItem => cartItem.user)
+    cartItems: CartItem[];
 }

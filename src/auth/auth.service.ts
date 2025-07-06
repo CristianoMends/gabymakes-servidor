@@ -67,6 +67,7 @@ export class AuthService {
             password: hashedPassword,
             role: 'user',
             addresses: [],
+            cartItems: []
         });
 
         const { password, ...result } = newUser;
@@ -109,7 +110,8 @@ export class AuthService {
                     googleId,
                     password: Math.random().toString(36).slice(-8),
                     role: 'user',
-                    addresses: []
+                    addresses: [],
+                    cartItems: []
                 });
             }
 
@@ -163,7 +165,8 @@ export class AuthService {
                     firstName: firstName,
                     lastName: lastName,
                     role: 'user',
-                    addresses: []
+                    addresses: [],
+                    cartItems: []
                 });
             } else if (!user.email) {
 
