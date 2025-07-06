@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Product } from 'src/products/entities/product.entity';
+import { ViewCartDto } from './dto/view-cart-dto';
 
 @Injectable()
 export class CartItemService {
@@ -18,10 +19,36 @@ export class CartItemService {
     private readonly productRepository: Repository<Product>,
   ) { }
 
-  async getCartItemsByUserId(userId: string): Promise<CartItem[]> {
-    return this.cartItemRepository.find({
+  async getCartItemsByUserId(userId: string): Promise<ViewCartDto[]> {
+
+    const rawCartItems = await this.cartItemRepository.find({
       where: { user: { id: userId } },
       relations: ['product', 'user'],
+    });
+    const consolidatedCartMap: { [productId: string]: { id: number; quantity: number; product: Product } } = {};
+
+    for (const item of rawCartItems) {
+      const productId = item.product.id;
+
+      if (consolidatedCartMap[productId]) {
+        consolidatedCartMap[productId].quantity += item.quantity;
+      } else {
+        consolidatedCartMap[productId] = {
+          id: item.id,
+          product: item.product,
+          quantity: item.quantity,
+        };
+      }
+    }
+
+    return Object.values(consolidatedCartMap).map((consolidatedData) => {
+      const tempCartItem: CartItem = {
+        id: consolidatedData.id,
+        quantity: consolidatedData.quantity,
+        product: consolidatedData.product,
+      } as CartItem;
+
+      return new ViewCartDto(tempCartItem);
     });
   }
 
