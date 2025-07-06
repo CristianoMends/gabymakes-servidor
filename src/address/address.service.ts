@@ -13,7 +13,14 @@ export class AddressService {
   ) { }
 
   async create(createAddressDto: CreateAddressDto): Promise<Address> {
-    const address = this.addressRepository.create(createAddressDto);
+    const { street, city, state, zipCode, userId } = createAddressDto;
+    const address = this.addressRepository.create({
+      street,
+      city,
+      state,
+      zipCode,
+      user: { id: userId },
+    });
     return await this.addressRepository.save(address);
   }
 
