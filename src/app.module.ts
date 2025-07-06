@@ -8,6 +8,8 @@ import { UploadModule } from './upload/upload.module';
 import { SectionsModule } from './sections/sections.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { CartModule } from './cart/cart.module';
+import { AddressModule } from './address/address.module';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -33,6 +35,8 @@ const isProd = process.env.NODE_ENV === 'production';
     SectionsModule,
     UsersModule,
     AuthModule,
+    CartModule,
+    AddressModule,
   ],
   controllers: [AppController],
   providers: [AppService],

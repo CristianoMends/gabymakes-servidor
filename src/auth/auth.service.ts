@@ -66,6 +66,7 @@ export class AuthService {
             ...createUserDto,
             password: hashedPassword,
             role: 'user',
+            addresses: [],
         });
 
         const { password, ...result } = newUser;
@@ -108,6 +109,7 @@ export class AuthService {
                     googleId,
                     password: Math.random().toString(36).slice(-8),
                     role: 'user',
+                    addresses: []
                 });
             }
 
@@ -161,6 +163,7 @@ export class AuthService {
                     firstName: firstName,
                     lastName: lastName,
                     role: 'user',
+                    addresses: []
                 });
             } else if (!user.email) {
 
