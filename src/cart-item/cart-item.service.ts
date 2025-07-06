@@ -73,4 +73,24 @@ export class CartItemService {
     if (result.affected === 0) throw new NotFoundException('Item do carrinho não encontrado');
   }
 
+  async updateQuantity(userId: string, itemId: number, quantity: number): Promise<CartItem> {
+    const item = await this.cartItemRepository.findOne({
+      where: { id: itemId, user: { id: userId } },
+      relations: ['product', 'user'],
+    });
+
+    if (!item) {
+      throw new Error('Item do carrinho não encontrado');
+    }
+
+    if (quantity <= 0) {
+      await this.cartItemRepository.delete(itemId);
+      return new CartItem();
+    }
+
+    item.quantity = quantity;
+    return await this.cartItemRepository.save(item);
+  }
+
+
 }
