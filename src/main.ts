@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origins: ['http://localhost:5173', 'https://gabymakes-servidor.vercel.app'],
+    origins: ['http://localhost:5173', 'https://gabymakes-servidor.vercel.app', 'https://gabymakes-website-git-develop-cristianos-projects-14338c05.vercel.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   });
