@@ -8,6 +8,10 @@ import { UploadModule } from './upload/upload.module';
 import { SectionsModule } from './sections/sections.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
+const isProd = process.env.NODE_ENV === 'production';
 
 @Module({
   imports: [
@@ -18,6 +22,12 @@ import { AuthModule } from './auth/auth.module';
       type: 'postgres',
       url: process.env.DATABASE_URL,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      autoLoadEntities: true,
+      ...(isProd && {
+        ssl: {
+          rejectUnauthorized: false,
+        },
+      }),
       synchronize: true,
     }),
     SectionsModule,
@@ -27,4 +37,4 @@ import { AuthModule } from './auth/auth.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
