@@ -1,6 +1,5 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { CartItemService } from './cart-item.service';
-import { CartItem } from './entities/cart-item.entity';
 import { AddItemDto } from './dto/add-item-dto';
 import { ViewCartDto } from './dto/view-cart-dto';
 import { UpdateQuantityDto } from './dto/update-item.dto';
