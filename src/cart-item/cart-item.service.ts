@@ -69,23 +69,17 @@ export class CartItemService {
   }
 
 
-  async removeItemFromCart(productId: string): Promise<void> {
-    const cartItem = await this.cartItemRepository.findOne({
-      where: {
-        product: {
-          id: productId
-        }
-      }
+  async removeItemFromCart(userId: string, productId: string): Promise<void> {
+
+    const result = await this.cartItemRepository.delete({
+      user: { id: userId },
+      product: { id: productId },
     });
 
-    if (!cartItem) {
-      throw new NotFoundException('Item do carrinho não encontrado para o produto especificado.');
-    }
-
-    const result = await this.cartItemRepository.delete(cartItem.id);
-
     if (result.affected === 0) {
-      throw new NotFoundException('Falha ao remover o item do carrinho (item pode já ter sido removido).');
+      throw new NotFoundException(
+        'Nenhum item encontrado para este usuário e produto.',
+      );
     }
   }
 

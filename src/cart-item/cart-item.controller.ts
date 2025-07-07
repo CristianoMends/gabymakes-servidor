@@ -3,6 +3,7 @@ import { CartItemService } from './cart-item.service';
 import { AddItemDto } from './dto/add-item-dto';
 import { ViewCartDto } from './dto/view-cart-dto';
 import { UpdateQuantityDto } from './dto/update-item.dto';
+import { RemoveCartItemDto } from './dto/remove-cart-dto';
 @Controller('cart-item')
 export class CartItemController {
   constructor(private readonly cartItemService: CartItemService) { }
@@ -22,9 +23,12 @@ export class CartItemController {
     return new ViewCartDto(await res);
   }
 
-  @Delete('remove/:productId')
-  async removeItem(@Param('itemId') itemId: string): Promise<{ message: string }> {
-    await this.cartItemService.removeItemFromCart(itemId);
+  @Delete('remove')
+  async removeItem(
+    @Body() dto: RemoveCartItemDto,
+  ): Promise<{ message: string }> {
+    const { userId, productId } = dto;
+    await this.cartItemService.removeItemFromCart(userId, productId);
     return { message: 'Item removido com sucesso' };
   }
   @Patch('update-quantity')
