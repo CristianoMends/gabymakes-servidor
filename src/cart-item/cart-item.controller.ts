@@ -22,8 +22,8 @@ export class CartItemController {
     return new ViewCartDto(await res);
   }
 
-  @Delete('remove/:itemId')
-  async removeItem(@Param('itemId', ParseIntPipe) itemId: number): Promise<{ message: string }> {
+  @Delete('remove/:productId')
+  async removeItem(@Param('itemId') itemId: string): Promise<{ message: string }> {
     await this.cartItemService.removeItemFromCart(itemId);
     return { message: 'Item removido com sucesso' };
   }
