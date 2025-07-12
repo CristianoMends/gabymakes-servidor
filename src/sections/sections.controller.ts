@@ -2,7 +2,7 @@ import { Controller, Post, Get, Param, Body, Patch, Delete, ParseIntPipe, UseGua
 import { SectionsService } from './sections.service';
 import { CreateSectionDto } from './dto/create-section.dto';
 import { UpdateSectionDto } from './dto/update-section.dto';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -16,6 +16,7 @@ export class SectionsController {
   @Roles('admin')
   @Post()
   @ApiOperation({ summary: 'Criar nova seção promocional' })
+  @ApiBearerAuth()
   @ApiResponse({ status: 201, description: 'Seção criada com sucesso' })
   create(@Body() dto: CreateSectionDto) {
     return this.sectionsService.create(dto);

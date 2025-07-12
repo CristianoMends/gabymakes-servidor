@@ -22,6 +22,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('GabyMakes API')
+    .addBearerAuth()
     .setDescription('Documentação da GabyMakes API')
     .setVersion('1.0')
     .addTag('products')

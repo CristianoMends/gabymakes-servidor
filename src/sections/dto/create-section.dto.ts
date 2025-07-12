@@ -1,8 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsUUID, IsArray } from 'class-validator';
+import { IsUUID, IsArray, IsString } from 'class-validator';
 
 export class CreateSectionDto {
     @ApiProperty({ example: 'Promoções de Batons' })
+    @IsString()
     title: string;
 
     @ApiProperty({
