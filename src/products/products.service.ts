@@ -38,25 +38,76 @@ export class ProductsService {
   }
 
   async findByFilters(filters: any): Promise<Product[]> {
-    const where: any = {};
+    const commonSearchTerm = filters.description;
 
-    if (filters.brand) where.brand = ILike(`%${filters.brand}%`);
-    if (filters.category) where.category = ILike(`%${filters.category}%`);
-    if (filters.description) where.description = ILike(`%${filters.description}%`);
+    const queryBuilder = this.productRepo.createQueryBuilder('product');
+
+    let isFirstCondition = true;
+
+    if (commonSearchTerm) {
+
+      queryBuilder.where(
+        `product.description ILIKE :searchTerm`,
+        { searchTerm: `%${commonSearchTerm}%` }
+      );
+
+      queryBuilder.orWhere(
+        `product.brand ILIKE :searchTerm`,
+        { searchTerm: `%${commonSearchTerm}%` }
+      );
+      queryBuilder.orWhere(
+        `product.category ILIKE :searchTerm`,
+        { searchTerm: `%${commonSearchTerm}%` }
+      );
+      isFirstCondition = false;
+    }
+
+    if (filters.brand) {
+      const condition = `product.brand ILIKE :brand`;
+      if (isFirstCondition) {
+        queryBuilder.where(condition, { brand: `%${filters.brand}%` });
+        isFirstCondition = false;
+      } else {
+        queryBuilder.andWhere(condition, { brand: `%${filters.brand}%` });
+      }
+    }
+
+    if (filters.category) {
+      const condition = `product.category ILIKE :category`;
+      if (isFirstCondition) {
+        queryBuilder.where(condition, { category: `%${filters.category}%` });
+        isFirstCondition = false;
+      } else {
+        queryBuilder.andWhere(condition, { category: `%${filters.category}%` });
+      }
+    }
 
     if (filters.priceMin || filters.priceMax) {
       const min = parseFloat(filters.priceMin) || 0;
       const max = parseFloat(filters.priceMax) || Number.MAX_VALUE;
-      where.price = Between(min, max);
+      const condition = `product.price BETWEEN :priceMin AND :priceMax`;
+      if (isFirstCondition) {
+        queryBuilder.where(condition, { priceMin: min, priceMax: max });
+        isFirstCondition = false;
+      } else {
+        queryBuilder.andWhere(condition, { priceMin: min, priceMax: max });
+      }
     }
 
     if (filters.quantityMin || filters.quantityMax) {
       const min = parseInt(filters.quantityMin) || 0;
       const max = parseInt(filters.quantityMax) || Number.MAX_SAFE_INTEGER;
-      where.quantity = Between(min, max);
+      const condition = `product.quantity BETWEEN :quantityMin AND :quantityMax`;
+      if (isFirstCondition) {
+        queryBuilder.where(condition, { quantityMin: min, quantityMax: max });
+        isFirstCondition = false;
+      } else {
+        queryBuilder.andWhere(condition, { quantityMin: min, quantityMax: max });
+      }
     }
 
-    return this.productRepo.find({ where });
+    const results = await queryBuilder.getMany();
+    return results;
   }
 
 }
