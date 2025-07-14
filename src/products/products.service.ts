@@ -40,7 +40,6 @@ export class ProductsService {
   async findByFilters(filters: any): Promise<Product[]> {
     const where: any = {};
 
-    if (filters.id) where.id = filters.id;
     if (filters.brand) where.brand = ILike(`%${filters.brand}%`);
     if (filters.category) where.category = ILike(`%${filters.category}%`);
     if (filters.description) where.description = ILike(`%${filters.description}%`);
