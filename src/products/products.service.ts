@@ -37,6 +37,28 @@ export class ProductsService {
     return this.productRepo.save(updated);
   }
 
+  async findUniqueCategories(): Promise<string[]> {
+    const categories = await this.productRepo
+      .createQueryBuilder('product')
+      .select('DISTINCT product.category', 'category') 
+      .where('product.category IS NOT NULL AND product.category != :emptyString', { emptyString: '' }) 
+      .orderBy('product.category', 'ASC') 
+      .getRawMany();     
+      
+    return categories.map(result => result.category);
+  }
+
+  async findUniqueBrands(): Promise<string[]> {
+    const brands = await this.productRepo
+      .createQueryBuilder('product')
+      .select('DISTINCT product.brand', 'brand') 
+      .where('product.brand IS NOT NULL AND product.brand != :emptyString', { emptyString: '' }) 
+      .orderBy('product.brand', 'ASC') 
+      .getRawMany();
+
+    return brands.map(result => result.brand);
+  }
+
   async findByFilters(filters: any): Promise<Product[]> {
     const commonSearchTerm = filters.description;
 
@@ -93,7 +115,6 @@ export class ProductsService {
         queryBuilder.andWhere(condition, { priceMin: min, priceMax: max });
       }
     }
-
     if (filters.quantityMin || filters.quantityMax) {
       const min = parseInt(filters.quantityMin) || 0;
       const max = parseInt(filters.quantityMax) || Number.MAX_SAFE_INTEGER;

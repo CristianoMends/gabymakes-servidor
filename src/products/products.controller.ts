@@ -37,6 +37,18 @@ export class ProductsController {
     return await this.productService.findByFilters(query);
   }
 
+  @Get('categories/unique')
+  @ApiOperation({ summary: 'Listar todas as categorias únicas de produtos' })
+  async findUniqueCategories() {
+    return await this.productService.findUniqueCategories();
+  }
+
+  @Get('brands/unique')
+  @ApiOperation({ summary: 'Listar todas as marcas únicas de produtos' })
+  async findUniqueBrands() {
+    return await this.productService.findUniqueBrands();
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Post()
