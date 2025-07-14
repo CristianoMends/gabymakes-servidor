@@ -63,7 +63,6 @@ export class ProductsController {
 
   @Get('search')
   @ApiOperation({ summary: 'Buscar produtos com filtros' })
-  @ApiQuery({ name: 'id', required: false })
   @ApiQuery({ name: 'brand', required: false })
   @ApiQuery({ name: 'category', required: false })
   @ApiQuery({ name: 'description', required: false })
