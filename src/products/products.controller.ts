@@ -24,6 +24,19 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 export class ProductsController {
   constructor(private readonly productService: ProductsService) { }
 
+  @Get('search')
+  @ApiOperation({ summary: 'Buscar produtos com filtros' })
+  @ApiQuery({ name: 'brand', required: false })
+  @ApiQuery({ name: 'category', required: false })
+  @ApiQuery({ name: 'description', required: false })
+  @ApiQuery({ name: 'priceMin', required: false })
+  @ApiQuery({ name: 'priceMax', required: false })
+  @ApiQuery({ name: 'quantityMin', required: false })
+  @ApiQuery({ name: 'quantityMax', required: false })
+  async findByFilters(@Query() query: any) {
+    return await this.productService.findByFilters(query);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Post()
@@ -59,18 +72,5 @@ export class ProductsController {
     @Body(new ValidationPipe()) dto: UpdateProductDto
   ) {
     return await this.productService.update(id, dto);
-  }
-
-  @Get('search')
-  @ApiOperation({ summary: 'Buscar produtos com filtros' })
-  @ApiQuery({ name: 'brand', required: false })
-  @ApiQuery({ name: 'category', required: false })
-  @ApiQuery({ name: 'description', required: false })
-  @ApiQuery({ name: 'priceMin', required: false })
-  @ApiQuery({ name: 'priceMax', required: false })
-  @ApiQuery({ name: 'quantityMin', required: false })
-  @ApiQuery({ name: 'quantityMax', required: false })
-  async findByFilters(@Query() query: any) {
-    return await this.productService.findByFilters(query);
   }
 }
