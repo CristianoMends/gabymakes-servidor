@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 
 export class UpdateProductDto {
     @IsOptional()
@@ -21,6 +21,10 @@ export class UpdateProductDto {
     @IsOptional()
     @IsString()
     category?: string;
+
+    @IsOptional()
+    @IsBoolean()
+    isActive?: boolean;
 
     @IsOptional()
     @IsNumber()

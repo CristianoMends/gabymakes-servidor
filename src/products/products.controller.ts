@@ -9,6 +9,7 @@ import {
   Param,
   ParseUUIDPipe,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductsService } from './products.service';
@@ -33,7 +34,11 @@ export class ProductsController {
   @ApiQuery({ name: 'priceMax', required: false })
   @ApiQuery({ name: 'quantityMin', required: false })
   @ApiQuery({ name: 'quantityMax', required: false })
+  @ApiQuery({ name: 'isActive', required: false, enum: ['true', 'false'] })
   async findByFilters(@Query() query: any) {
+    if (query.isActive !== undefined) {
+      query.isActive = query.isActive === 'true';
+    }
     return await this.productService.findByFilters(query);
   }
 
@@ -49,6 +54,14 @@ export class ProductsController {
     return await this.productService.findUniqueBrands();
   }
 
+  @Delete(':id')
+  @ApiOperation({ summary: 'Deletar um produto pelo ID' })
+  @ApiParam({ name: 'id', type: 'string' })
+  async delete(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.productService.delete(id);
+  }
+
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Post()
@@ -61,7 +74,7 @@ export class ProductsController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os produtos' })
   async findAll() {
-    return await this.productService.findAll();
+    return (await this.productService.findAll()).filter(p => p.isActive);
   }
   @Get(':id')
   @ApiParam({ name: 'id', type: 'string' })

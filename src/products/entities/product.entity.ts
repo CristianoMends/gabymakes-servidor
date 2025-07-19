@@ -24,6 +24,9 @@ export class Product {
   @Column('int')
   quantity: number;
 
+  @Column()
+  isActive: boolean = true
+
   @OneToMany(() => CartItem, cartItem => cartItem.product)
   cartItems: CartItem[];
 }

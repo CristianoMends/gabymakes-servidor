@@ -28,6 +28,18 @@ export class ProductsService {
 
     return p;
   }
+  async delete(id: string): Promise<void> {
+    const product = await this.productRepo.findOneBy({ id });
+
+    if (product) {
+
+      product.isActive = false;
+      await this.productRepo.save(product);
+    } else {
+      throw new NotFoundException('Produto não encontrado');
+    }
+  }
+
 
   async update(id: string, data: UpdateProductDto): Promise<Product> {
     const product = await this.productRepo.findOneBy({ id });
@@ -40,20 +52,20 @@ export class ProductsService {
   async findUniqueCategories(): Promise<string[]> {
     const categories = await this.productRepo
       .createQueryBuilder('product')
-      .select('DISTINCT product.category', 'category') 
-      .where('product.category IS NOT NULL AND product.category != :emptyString', { emptyString: '' }) 
-      .orderBy('product.category', 'ASC') 
-      .getRawMany();     
-      
+      .select('DISTINCT product.category', 'category')
+      .where('product.category IS NOT NULL AND product.category != :emptyString', { emptyString: '' })
+      .orderBy('product.category', 'ASC')
+      .getRawMany();
+
     return categories.map(result => result.category);
   }
 
   async findUniqueBrands(): Promise<string[]> {
     const brands = await this.productRepo
       .createQueryBuilder('product')
-      .select('DISTINCT product.brand', 'brand') 
-      .where('product.brand IS NOT NULL AND product.brand != :emptyString', { emptyString: '' }) 
-      .orderBy('product.brand', 'ASC') 
+      .select('DISTINCT product.brand', 'brand')
+      .where('product.brand IS NOT NULL AND product.brand != :emptyString', { emptyString: '' })
+      .orderBy('product.brand', 'ASC')
       .getRawMany();
 
     return brands.map(result => result.brand);
@@ -101,6 +113,16 @@ export class ProductsService {
         isFirstCondition = false;
       } else {
         queryBuilder.andWhere(condition, { category: `%${filters.category}%` });
+      }
+    }
+
+    if (filters.isActive !== undefined) {
+      const condition = `product.isActive = :isActive`;
+      if (isFirstCondition) {
+        queryBuilder.where(condition, { isActive: filters.isActive });
+        isFirstCondition = false;
+      } else {
+        queryBuilder.andWhere(condition, { isActive: filters.isActive });
       }
     }
 
