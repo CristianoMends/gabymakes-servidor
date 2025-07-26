@@ -5,8 +5,6 @@ export class ViewUserDto {
 
     email: string;
 
-    password?: string;
-
     firstName?: string;
 
     lastName?: string;
@@ -19,10 +17,10 @@ export class ViewUserDto {
 
     role: string
 
-    constructor(user: User) {
+    constructor(user: User | null) {
+        if (user == null) return
         this.id = user.id;
         this.email = user.email;
-        this.password = user.password;
         this.firstName = user.firstName;
         this.lastName = user.lastName;
         this.whatsapp = user.whatsapp;
