@@ -12,6 +12,9 @@ export class Product {
   @Column('decimal', { precision: 10, scale: 2 })
   price: number;
 
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  discount: number = 0;
+
   @Column()
   imageUrl: string;
 

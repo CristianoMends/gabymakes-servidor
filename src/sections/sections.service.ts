@@ -26,7 +26,7 @@ export class SectionsService {
   }
 
   findAll() {
-    return this.sectionRepository.find({ relations: ['products'] });
+    return this.sectionRepository.find({ relations: ['products'], where: { products: { isActive: true } } });
   }
 
   async findOne(id: number) {

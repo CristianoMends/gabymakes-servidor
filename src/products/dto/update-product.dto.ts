@@ -1,4 +1,4 @@
-import { IsBoolean, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
+import { IsBoolean, IsInt, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 
 export class UpdateProductDto {
     @IsOptional()
@@ -9,6 +9,11 @@ export class UpdateProductDto {
     @IsNumber({ maxDecimalPlaces: 2 })
     @IsPositive()
     price?: number;
+
+    @IsOptional()
+    @IsNumber()
+    @IsPositive()
+    discount?: number;
 
     @IsOptional()
     @IsString()
