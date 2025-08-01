@@ -54,8 +54,8 @@ export class PaymentService {
         const body = {
             items: itemsParaMercadoPago,
             back_urls: {
-                success: 'https://gabymakes-website.vercel.app/payment/success',
-                failure: 'https://gabymakes-website.vercel.app/payment/failure',
+                success: 'https://gabymakes.vercel.app/payment/success',
+                failure: 'https://gabymakes.vercel.app/payment/failure',
                 pending: '',
             },
             auto_return: 'approved' as const,
