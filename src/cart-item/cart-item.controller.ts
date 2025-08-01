@@ -32,7 +32,8 @@ export class CartItemController {
     return { message: 'Item removido com sucesso' };
   }
   @Patch('update-quantity')
-  async updateQuantity(@Body() dto: UpdateQuantityDto): Promise<ViewCartDto> {
+  async updateQuantity(@Body() dto: UpdateQuantityDto): Promise<ViewCartDto> {    
+
     const { userId, itemId, quantity } = dto;
 
     const updatedItem = await this.cartItemService.updateQuantity(userId, itemId, quantity);

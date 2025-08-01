@@ -34,14 +34,11 @@ export class PaymentService {
                     throw new NotFoundException(`Produto com ID ${item.id} não encontrado.`);
                 }
 
-                console.log('product:', product)
-
-
                 return {
                     id: product.id,
                     title: product.description,
                     quantity: item.quantity,
-                    unit_price: Number(product.price),
+                    unit_price: Number(product.price) - (Number(product.price) * (product.discount / 100)),
                     currency_id: 'BRL',
                 };
             })
