@@ -2,6 +2,10 @@ import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common
 import { ConfigService } from '@nestjs/config';
 import MercadoPagoConfig, { Payment, Preference } from 'mercadopago';
 import * as crypto from 'crypto';
+import { Product } from 'src/products/entities/product.entity';
+import { CreatePaymentDto } from './dto/create-payment.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class PaymentService {
@@ -9,13 +13,36 @@ export class PaymentService {
     private readonly webhookSecret: string;
     private readonly logger = new Logger(PaymentService.name);
 
-    constructor(private configService: ConfigService) {
+    constructor(
+        private configService: ConfigService,
+        @InjectRepository(Product)
+        private readonly productRepo: Repository<Product>
+    ) {
         const accessToken = this.configService.get<string>('MERCADO_PAGO_ACCESS_TOKEN')!;
         this.webhookSecret = this.configService.get<string>('MERCADO_PAGO_WEBHOOK_SECRET')!;
         this.client = new MercadoPagoConfig({ accessToken: accessToken });
     }
 
-    async createPaymentPreference(items: any[]) {
+    async createPaymentPreference(paymentData: CreatePaymentDto) {
+        let items: any[] = [];
+        try {
+            paymentData.items.forEach(async (item) => {
+                const product = await this.productRepo.findOne({ where: { id: item.id } });
+
+                if (!product) {
+                    throw new Error(`Produto com ID ${item.id} não encontrado.`);
+                }
+                
+                items.push({
+                    id: item.id,
+                    title: product.description,
+                    quantity: item.quantity,
+                    price: product.price,
+                });
+            })
+        } catch (e) {
+
+        }
 
         const body = {
             items: items.map(item => ({
@@ -26,8 +53,8 @@ export class PaymentService {
                 currency_id: 'BRL',
             })),
             back_urls: {
-                success: 'http://localhost:3000/success',
-                failure: 'http://localhost:3000/failure',
+                success: 'https://gabymakes-website-git-develop-cristianos-projects-14338c05.vercel.app?_vercel_share=QiTA5GdbVbIpi4zDhoLzGhMr9PPdFSpl/payment/success',
+                failure: 'https://gabymakes-website-git-develop-cristianos-projects-14338c05.vercel.app?_vercel_share=QiTA5GdbVbIpi4zDhoLzGhMr9PPdFSpl/payment/failure',
                 pending: '',
             },
             auto_return: 'approved' as const, // Retorna automaticamente para o site

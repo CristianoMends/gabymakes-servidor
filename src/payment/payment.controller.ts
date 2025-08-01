@@ -14,18 +14,7 @@ export class PaymentController {
     @Res() res: Response,
   ) {
     try {
-      // Aqui, você pode buscar o produto do seu banco de dados
-      // Para simplificar, estamos usando os dados enviados pelo corpo da requisição
-      const items = [
-        {
-          id: '1234',
-          title: paymentData.title,
-          quantity: paymentData.quantity,
-          price: paymentData.price,
-        },
-      ];
-
-      const preference = await this.paymentService.createPaymentPreference(items);
+      const preference = await this.paymentService.createPaymentPreference(paymentData);
       return res.json(preference);
     } catch (error) {
       return res.status(500).json({ message: error.message });
