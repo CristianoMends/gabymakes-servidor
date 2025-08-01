@@ -11,6 +11,7 @@ import { AuthModule } from './auth/auth.module';
 import { AddressModule } from './address/address.module';
 import { CartItemModule } from './cart-item/cart-item.module';
 import { BannersModule } from './banners/banners.module';
+import { PaymentModule } from './payment/payment.module';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -39,6 +40,7 @@ const isProd = process.env.NODE_ENV === 'production';
     AddressModule,
     CartItemModule,
     BannersModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
