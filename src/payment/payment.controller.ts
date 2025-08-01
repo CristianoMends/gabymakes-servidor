@@ -1,4 +1,4 @@
-import { Body, Controller, HttpStatus, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Query, Req, Res } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Response } from 'express';
@@ -46,5 +46,13 @@ export class PaymentController {
       // Passamos o ID do pagamento e os cabeçalhos para verificação
       await this.paymentService.processWebhook(dataId, req.headers);
     }
+  }
+
+  @Get('status/:payment_id')
+  async getPaymentStatus(
+    @Param('payment_id') paymentId: string,
+  ) {
+    // Delega a lógica para o serviço
+    return this.paymentService.getPaymentDetails(paymentId);
   }
 }

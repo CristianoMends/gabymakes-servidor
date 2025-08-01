@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import MercadoPagoConfig, { Payment, Preference } from 'mercadopago';
 import * as crypto from 'crypto';
@@ -24,53 +24,54 @@ export class PaymentService {
     }
 
     async createPaymentPreference(paymentData: CreatePaymentDto) {
-        let items: any[] = [];
-        try {
-            paymentData.items.forEach(async (item) => {
+        this.logger.log(`Iniciando criação de preferência para ${paymentData.items.length} item(s).`);
+
+        const itemsParaMercadoPago = await Promise.all(
+            paymentData.items.map(async (item) => {
                 const product = await this.productRepo.findOne({ where: { id: item.id } });
 
                 if (!product) {
-                    throw new Error(`Produto com ID ${item.id} não encontrado.`);
+                    throw new NotFoundException(`Produto com ID ${item.id} não encontrado.`);
                 }
-                
-                items.push({
-                    id: item.id,
+
+                console.log('product:', product)
+
+
+                return {
+                    id: product.id,
                     title: product.description,
                     quantity: item.quantity,
-                    price: product.price,
-                });
+                    unit_price: Number(product.price),
+                    currency_id: 'BRL',
+                };
             })
-        } catch (e) {
+        );
 
+        if (itemsParaMercadoPago.length === 0) {
+            throw new Error("Nenhum item válido para processar.");
         }
 
         const body = {
-            items: items.map(item => ({
-                id: item.id,
-                title: item.title,
-                quantity: item.quantity,
-                unit_price: item.price,
-                currency_id: 'BRL',
-            })),
+            items: itemsParaMercadoPago,
             back_urls: {
-                success: 'https://gabymakes-website-git-develop-cristianos-projects-14338c05.vercel.app?_vercel_share=QiTA5GdbVbIpi4zDhoLzGhMr9PPdFSpl/payment/success',
-                failure: 'https://gabymakes-website-git-develop-cristianos-projects-14338c05.vercel.app?_vercel_share=QiTA5GdbVbIpi4zDhoLzGhMr9PPdFSpl/payment/failure',
+                success: 'https://gabymakes-website.vercel.app/payment/success',
+                failure: 'https://gabymakes-website.vercel.app/payment/failure',
                 pending: '',
             },
-            auto_return: 'approved' as const, // Retorna automaticamente para o site
+            auto_return: 'approved' as const,
         };
 
         const preference = new Preference(this.client);
 
         try {
             const result = await preference.create({ body });
-
+            this.logger.log(`Preferência de pagamento criada: ${result.id}`);
             return {
-                id: result.id, // ID da preferência, que será usado no frontend
-                init_point: result.init_point, // URL de checkout para redirecionamento
+                id: result.id,
+                init_point: result.init_point,
             };
         } catch (error) {
-            console.error('Erro ao criar preferência de pagamento:', error);
+            this.logger.error('Erro ao criar preferência de pagamento no MP:', error.cause || error.message);
             throw new InternalServerErrorException('Falha ao criar preferência de pagamento.');
         }
     }
@@ -114,7 +115,6 @@ export class PaymentService {
 
         try {
             // ETAPA 2: BUSCAR OS DADOS ATUALIZADOS DO PAGAMENTO
-            // NUNCA confie no corpo do webhook. Use o ID para buscar a informação fresca e segura.
             const payment = await new Payment(this.client).get({ id: paymentId });
 
             this.logger.log(`Status do pagamento: ${payment.status}`);
@@ -131,6 +131,31 @@ export class PaymentService {
 
         } catch (error) {
             this.logger.error('Erro ao processar o webhook:', error);
+        }
+    }
+
+    async getPaymentDetails(paymentId: string) {
+        this.logger.log(`Buscando detalhes do pagamento: ${paymentId}`);
+        try {
+            const payment = await new Payment(this.client).get({ id: paymentId });
+
+            // É aqui que você pode executar lógicas importantes,
+            // como criar o pedido final no seu banco de dados, se o webhook falhar.
+            if (payment.status === 'approved') {
+                // TODO: Verificar se o pedido já foi criado pelo webhook. Se não, crie-o aqui.
+                // Ex: await this.orderService.findOrCreateByPaymentId(paymentId);
+            }
+
+            // Retorna apenas os dados necessários para o front-end
+            return {
+                id: payment.id,
+                status: payment.status,
+                date_approved: payment.date_approved,
+                payer_email: payment.payer?.email,
+            };
+        } catch (error) {
+            this.logger.error(`Erro ao buscar pagamento ${paymentId}`, error);
+            throw new NotFoundException(`Pagamento com ID ${paymentId} não encontrado.`);
         }
     }
 }
