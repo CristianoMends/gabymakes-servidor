@@ -9,6 +9,8 @@ import { Repository } from 'typeorm';
 import { EmailService } from '../email/email.service';
 import { OrdersService } from 'src/order/order.service';
 import { CreateOrderDto } from 'src/order/dto/create-order.dto';
+import { Address } from 'src/address/entities/address.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class PaymentService {
@@ -20,6 +22,10 @@ export class PaymentService {
         private configService: ConfigService,
         @InjectRepository(Product)
         private readonly productRepo: Repository<Product>,
+        @InjectRepository(Address)
+        private readonly addressRepo: Repository<Address>,
+        @InjectRepository(User)
+        private readonly userRepo: Repository<User>,
         private readonly emailService: EmailService,
         private readonly orderService: OrdersService,
     ) {
@@ -120,12 +126,36 @@ export class PaymentService {
             this.logger.log(`Status do pagamento: ${payment.status}`);
 
             if (payment.status === 'approved') {
+
+
+            } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
+                this.logger.log(`Pagamento ${paymentId} foi ${payment.status}.`);
+            }
+
+        } catch (error) {
+            this.logger.error('Erro ao processar o webhook:', error);
+        }
+    }
+
+    async getPaymentDetails(
+        paymentId: string,
+        userId: string,
+        addressId: string,
+    ) {
+        this.logger.log(`Buscando detalhes do pagamento: ${paymentId}`);
+        try {
+            const payment = await new Payment(this.client).get({ id: paymentId });
+
+            if (payment.status === 'approved') {
                 this.logger.log(`Pagamento ${paymentId} APROVADO. Atualizando banco de dados...`);
 
+                const user = await this.userRepo.findOne({ where: { id: userId } });
+                const address = await this.addressRepo.findOne({ where: { id: Number(addressId) } });
+
                 const createOrderDto: CreateOrderDto = {
-                    customerName: payment.payer?.first_name || 'Cliente',
-                    customerEmail: payment.payer?.email || '',
-                    deliveryAddress: payment.additional_info?.shipments?.receiver_address?.city_name + ', ' + payment.additional_info?.shipments?.receiver_address?.floor || 'Endereço não informado',
+                    customerName: `${user?.firstName} ${user?.lastName}` || 'Cliente',
+                    customerEmail: user?.email || '',
+                    deliveryAddress: `${address?.street}, ${address?.city} - ${address?.state} ${address?.zipCode}` || 'Endereço não informado',
                     items: payment.additional_info?.items?.map(item => ({
                         productId: item.id,
                         quantity: item.quantity,
@@ -154,31 +184,8 @@ export class PaymentService {
                     order.id,
                 );
                 this.logger.log(`Email enviado para o dono do site.`);
-
-
-            } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
-                // TODO: Atualize o status do pedido no seu banco de dados para "FALHOU" ou "CANCELADO"
-                this.logger.log(`Pagamento ${paymentId} foi ${payment.status}.`);
             }
 
-        } catch (error) {
-            this.logger.error('Erro ao processar o webhook:', error);
-        }
-    }
-
-    async getPaymentDetails(paymentId: string) {
-        this.logger.log(`Buscando detalhes do pagamento: ${paymentId}`);
-        try {
-            const payment = await new Payment(this.client).get({ id: paymentId });
-
-            // É aqui que você pode executar lógicas importantes,
-            // como criar o pedido final no seu banco de dados, se o webhook falhar.
-            if (payment.status === 'approved') {
-                // TODO: Verificar se o pedido já foi criado pelo webhook. Se não, crie-o aqui.
-                // Ex: await this.orderService.findOrCreateByPaymentId(paymentId);
-            }
-
-            // Retorna apenas os dados necessários para o front-end
             return {
                 id: payment.id,
                 status: payment.status,

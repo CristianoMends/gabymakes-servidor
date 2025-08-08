@@ -48,11 +48,19 @@ export class PaymentController {
     }
   }
 
-  @Get('status/:payment_id')
+  @Post('status')
   async getPaymentStatus(
-    @Param('payment_id') paymentId: string,
+    @Body() body: {
+      paymentId: string;
+      userId: string;
+      addressId: string;
+    },
   ) {
-    // Delega a lógica para o serviço
-    return this.paymentService.getPaymentDetails(paymentId);
+    return this.paymentService.getPaymentDetails(
+      body.paymentId,
+      body.userId,
+      body.addressId
+    );
   }
+
 }
