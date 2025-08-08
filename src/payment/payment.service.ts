@@ -6,6 +6,9 @@ import { Product } from 'src/products/entities/product.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EmailService } from '../email/email.service';
+import { OrdersService } from 'src/order/order.service';
+import { CreateOrderDto } from 'src/order/dto/create-order.dto';
 
 @Injectable()
 export class PaymentService {
@@ -16,7 +19,9 @@ export class PaymentService {
     constructor(
         private configService: ConfigService,
         @InjectRepository(Product)
-        private readonly productRepo: Repository<Product>
+        private readonly productRepo: Repository<Product>,
+        private readonly emailService: EmailService,
+        private readonly orderService: OrdersService,
     ) {
         const accessToken = this.configService.get<string>('MERCADO_PAGO_ACCESS_TOKEN')!;
         this.webhookSecret = this.configService.get<string>('MERCADO_PAGO_WEBHOOK_SECRET')!;
@@ -102,25 +107,55 @@ export class PaymentService {
     async processWebhook(paymentId: string, headers: any) {
         this.logger.log(`Processando webhook para o pagamento ID: ${paymentId}`);
 
-        // ETAPA 1: VERIFICAR A AUTENTICIDADE DO WEBHOOK
         if (!this.isValidWebhook(headers, paymentId)) {
             this.logger.warn('Webhook inválido recebido. Assinatura não corresponde.');
-            return; // Ignora o processamento
+            return;
         }
 
         this.logger.log('Webhook verificado com sucesso!');
 
         try {
-            // ETAPA 2: BUSCAR OS DADOS ATUALIZADOS DO PAGAMENTO
             const payment = await new Payment(this.client).get({ id: paymentId });
 
             this.logger.log(`Status do pagamento: ${payment.status}`);
 
-            // ETAPA 3: EXECUTAR SUA LÓGICA DE NEGÓCIO
             if (payment.status === 'approved') {
-                // TODO: Atualize o status do pedido no seu banco de dados para "PAGO"
                 this.logger.log(`Pagamento ${paymentId} APROVADO. Atualizando banco de dados...`);
-                // Ex: await this.orderRepository.update(payment.external_reference, { status: 'PAID' });
+
+                const createOrderDto: CreateOrderDto = {
+                    customerName: payment.payer?.first_name || 'Cliente',
+                    customerEmail: payment.payer?.email || '',
+                    deliveryAddress: payment.additional_info?.shipments?.receiver_address?.city_name + ', ' + payment.additional_info?.shipments?.receiver_address?.floor || 'Endereço não informado',
+                    items: payment.additional_info?.items?.map(item => ({
+                        productId: item.id,
+                        quantity: item.quantity,
+                    })) || [],
+                };
+
+                const order = await this.orderService.createOrder(createOrderDto);
+                this.logger.log(`Pedido criado com ID: ${order.id}`);
+
+                if (createOrderDto.customerEmail) {
+                    await this.emailService.sendConfirmationEmailToClient(
+                        'Confirmação de pedido',
+                        createOrderDto.customerName,
+                        createOrderDto.customerEmail,
+                        createOrderDto.deliveryAddress,
+                        order.id,
+                    );
+                    this.logger.log(`Email enviado para o cliente.`);
+                }
+
+                await this.emailService.sendConfirmationEmailToOwner(
+                    'Novo pedido recebido',
+                    createOrderDto.customerName,
+                    createOrderDto.customerEmail,
+                    createOrderDto.deliveryAddress,
+                    order.id,
+                );
+                this.logger.log(`Email enviado para o dono do site.`);
+
+
             } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
                 // TODO: Atualize o status do pedido no seu banco de dados para "FALHOU" ou "CANCELADO"
                 this.logger.log(`Pagamento ${paymentId} foi ${payment.status}.`);

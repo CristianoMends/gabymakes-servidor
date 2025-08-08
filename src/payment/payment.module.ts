@@ -4,9 +4,11 @@ import { PaymentController } from './payment.controller';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Product } from 'src/products/entities/product.entity';
+import { EmailModule } from '../email/email.module';
+import { OrderModule } from '../order/order.module';
 
 @Module({
-  imports: [
+  imports: [EmailModule, OrderModule,
     TypeOrmModule.forFeature([Product]),
     ConfigModule.forRoot({
       isGlobal: true,
