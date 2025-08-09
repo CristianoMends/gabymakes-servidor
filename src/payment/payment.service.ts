@@ -144,7 +144,7 @@ export class PaymentService {
     ) {
         this.logger.log(`Buscando detalhes do pagamento: ${paymentId}`);
         try {
-            const payment = await new Payment(this.client).get({ id: paymentId });
+            const payment = await new Payment(this.client).get({ id: String(paymentId) });
 
             if (payment.status === 'approved') {
                 this.logger.log(`Pagamento ${paymentId} APROVADO. Atualizando banco de dados...`);

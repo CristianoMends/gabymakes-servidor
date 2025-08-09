@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { Order, OrderStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { Product } from 'src/products/entities/product.entity';
@@ -48,5 +48,41 @@ export class OrdersService {
     });
 
     return this.orderRepo.save(order);
+  }
+
+
+  async findAll(filters: { startDate?: string, endDate?: string }): Promise<Order[]> {
+    let where: any = {};
+
+    if (filters.startDate && filters.endDate) {
+      where.createdAt = Between(
+        new Date(filters.startDate),
+        new Date(filters.endDate)
+      );
+    } else if (filters.startDate) {
+      where.createdAt = MoreThanOrEqual(new Date(filters.startDate));
+    } else if (filters.endDate) {
+      where.createdAt = LessThanOrEqual(new Date(filters.endDate));
+    }
+
+    return this.orderRepo.find({
+      relations: [
+        'items',        // relação com OrderItem
+        'items.product' // relação com Product através de OrderItem
+      ],
+      where: where,
+      order: { createdAt: 'DESC' }
+    });
+  }
+
+  // Busca pedidos de um usuário específico
+  async findById(id: string): Promise<Order | null> {
+    return this.orderRepo.findOne({
+      relations: [
+        'items',
+        'items.product'
+      ],
+      where: { id }
+    })
   }
 }
