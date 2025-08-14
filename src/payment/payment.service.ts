@@ -126,28 +126,15 @@ export class PaymentService {
             this.logger.log(`Status do pagamento: ${payment.status}`);
 
             if (payment.status === 'approved') {
+                this.logger.log(`Pagamento ${paymentId} APROVADO. Criando pedido...`);
 
+                const userId = payment.metadata?.userId;
+                const addressId = payment.metadata?.addressId;
 
-            } else if (payment.status === 'rejected' || payment.status === 'cancelled') {
-                this.logger.log(`Pagamento ${paymentId} foi ${payment.status}.`);
-            }
-
-        } catch (error) {
-            this.logger.error('Erro ao processar o webhook:', error);
-        }
-    }
-
-    async getPaymentDetails(
-        paymentId: string,
-        userId: string,
-        addressId: string,
-    ) {
-        this.logger.log(`Buscando detalhes do pagamento: ${paymentId}`);
-        try {
-            const payment = await new Payment(this.client).get({ id: String(paymentId) });
-
-            if (payment.status === 'approved') {
-                this.logger.log(`Pagamento ${paymentId} APROVADO. Atualizando banco de dados...`);
+                if (!userId || !addressId) {
+                    this.logger.error(`Não foi possível criar o pedido: userId ou addressId ausentes no metadata.`);
+                    return;
+                }
 
                 const user = await this.userRepo.findOne({ where: { id: userId } });
                 const address = await this.addressRepo.findOne({ where: { id: Number(addressId) } });
@@ -185,16 +172,46 @@ export class PaymentService {
                 );
                 this.logger.log(`Email enviado para o dono do site.`);
             }
+            else if (payment.status === 'rejected' || payment.status === 'cancelled') {
+                this.logger.log(`Pagamento ${paymentId} foi ${payment.status}.`);
+            }
+
+        } catch (error) {
+            this.logger.error('Erro ao processar o webhook:', error);
+        }
+    }
+
+
+    async getPaymentDetails(
+        paymentId: string,
+        userId: string,
+        addressId: string,
+    ) {
+        this.logger.log(`Buscando detalhes do pagamento: ${paymentId}`);
+        try {
+            const payment = await new Payment(this.client).get({ id: paymentId });
 
             return {
                 id: payment.id,
-                status: payment.status,
+                status: payment.status, // approved, rejected, pending
+                status_detail: payment.status_detail,
+                transaction_amount: payment.transaction_amount,
                 date_approved: payment.date_approved,
-                payer_email: payment.payer?.email,
+                date_created: payment.date_created,
+                payment_method_id: payment.payment_method_id,
+                payment_type_id: payment.payment_type_id,
+                payer: {
+                    email: payment.payer?.email,
+                    first_name: payment.payer?.first_name,
+                    last_name: payment.payer?.last_name,
+                },
+                additional_info: payment.additional_info || {},
+                metadata: payment.metadata || {},
             };
+
         } catch (error) {
-            this.logger.error(`Erro ao buscar pagamento ${paymentId}`, error);
-            throw new NotFoundException(`Pagamento com ID ${paymentId} não encontrado.`);
+            this.logger.error(`Erro ao buscar detalhes do pagamento ${paymentId}:`, error);
+            throw new Error('Não foi possível buscar os detalhes do pagamento');
         }
     }
 }

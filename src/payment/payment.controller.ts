@@ -1,7 +1,8 @@
 import { Body, Controller, Get, HttpStatus, Param, Post, Query, Req, Res } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
-import { Response } from 'express';
+import { Response, Request } from 'express';
+
 
 
 @Controller('payment')
@@ -22,29 +23,26 @@ export class PaymentController {
   }
 
   @Post('webhook')
-  async handleWebhook(
-    @Query('type') type: string,
-    @Query('data.id') dataId: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
-    // Para depuração inicial, vamos logar tudo que chega
+  async handleWebhook(@Req() req: Request, @Res() res: Response) {
+    const { type, data } = req.body;
+
     console.log('--- Webhook Recebido ---');
-    console.log('Tipo (Type):', type);
-    console.log('ID do Dado (Data ID):', dataId);
-    console.log('Corpo (Body):', req.body);
-    console.log('Cabeçalhos (Headers):', req.headers);
+    console.log('Tipo (type):', type);
+    console.log('ID do pagamento:', data?.id);
+    console.log('Corpo completo:', req.body);
+    console.log('Cabeçalhos:', req.headers);
     console.log('------------------------');
 
-    // É crucial responder ao Mercado Pago com status 200 ou 201 OK
-    // para que ele saiba que você recebeu o webhook e não tente enviar de novo.
-    res.status(HttpStatus.OK).send();
+    // Sempre responder ao Mercado Pago rapidamente
+    res.sendStatus(HttpStatus.OK);
 
-    // Apenas processe eventos do tipo 'payment'
-    if (type === 'payment') {
-      // Delega o processamento para o nosso serviço
-      // Passamos o ID do pagamento e os cabeçalhos para verificação
-      await this.paymentService.processWebhook(dataId, req.headers);
+    // Processar somente eventos do tipo payment
+    if (type === 'payment' && data?.id) {
+      try {
+        await this.paymentService.processWebhook(data.id, req.headers);
+      } catch (err) {
+        console.error('Erro ao processar webhook:', err);
+      }
     }
   }
 
