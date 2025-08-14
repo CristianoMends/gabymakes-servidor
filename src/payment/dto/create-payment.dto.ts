@@ -24,4 +24,10 @@ export class CreatePaymentDto {
     @ValidateNested({ each: true })
     @Type(() => PaymentItemDto)
     items: PaymentItemDto[];
+
+    @IsNumber()
+    addressId: number;
+
+    @IsString()
+    userId: string
 }

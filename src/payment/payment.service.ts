@@ -67,6 +67,10 @@ export class PaymentService {
                 pending: '',
             },
             auto_return: 'approved' as const,
+            metadata: {
+                userId: paymentData.userId,
+                addressId: paymentData.addressId
+            },
         };
 
         const preference = new Preference(this.client);
@@ -183,35 +187,21 @@ export class PaymentService {
 
 
     async getPaymentDetails(
-        paymentId: string,
-        userId: string,
-        addressId: string,
+        paymentId: string
     ) {
         this.logger.log(`Buscando detalhes do pagamento: ${paymentId}`);
         try {
-            const payment = await new Payment(this.client).get({ id: paymentId });
+            const payment = await new Payment(this.client).get({ id: String(paymentId) });
 
             return {
                 id: payment.id,
-                status: payment.status, // approved, rejected, pending
-                status_detail: payment.status_detail,
-                transaction_amount: payment.transaction_amount,
+                status: payment.status,
                 date_approved: payment.date_approved,
-                date_created: payment.date_created,
-                payment_method_id: payment.payment_method_id,
-                payment_type_id: payment.payment_type_id,
-                payer: {
-                    email: payment.payer?.email,
-                    first_name: payment.payer?.first_name,
-                    last_name: payment.payer?.last_name,
-                },
-                additional_info: payment.additional_info || {},
-                metadata: payment.metadata || {},
+                payer_email: payment.payer?.email,
             };
-
         } catch (error) {
-            this.logger.error(`Erro ao buscar detalhes do pagamento ${paymentId}:`, error);
-            throw new Error('Não foi possível buscar os detalhes do pagamento');
+            this.logger.error(`Erro ao buscar pagamento ${paymentId}`, error);
+            throw new NotFoundException(`Pagamento com ID ${paymentId} não encontrado.`);
         }
     }
 }

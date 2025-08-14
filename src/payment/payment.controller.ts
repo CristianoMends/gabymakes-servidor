@@ -50,14 +50,10 @@ export class PaymentController {
   async getPaymentStatus(
     @Body() body: {
       paymentId: string;
-      userId: string;
-      addressId: string;
     },
   ) {
     return this.paymentService.getPaymentDetails(
       body.paymentId,
-      body.userId,
-      body.addressId
     );
   }
 
