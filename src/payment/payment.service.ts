@@ -11,6 +11,7 @@ import { OrdersService } from 'src/order/order.service';
 import { CreateOrderDto } from 'src/order/dto/create-order.dto';
 import { Address } from 'src/address/entities/address.entity';
 import { User } from 'src/users/entities/user.entity';
+import { Payments } from './entity/payments';
 
 @Injectable()
 export class PaymentService {
@@ -26,6 +27,8 @@ export class PaymentService {
         private readonly addressRepo: Repository<Address>,
         @InjectRepository(User)
         private readonly userRepo: Repository<User>,
+        @InjectRepository(Payments)
+        private readonly paymentRepo: Repository<Payments>,
         private readonly emailService: EmailService,
         private readonly orderService: OrdersService,
     ) {
@@ -40,6 +43,9 @@ export class PaymentService {
         if (!paymentData.userId || !paymentData.addressId) {
             throw new BadRequestException('userId ou addressId ausentes');
         }
+
+        this.logger.log(`userId: ${paymentData.userId}`);
+        this.logger.log(`addressId: ${paymentData.addressId}`);
 
         const itemsParaMercadoPago = await Promise.all(
             paymentData.items.map(async (item) => {
@@ -82,6 +88,14 @@ export class PaymentService {
         try {
             const result = await preference.create({ body });
             this.logger.log(`Preferência de pagamento criada: ${result.id}`);
+
+            const paymentEntity = this.paymentRepo.create({
+                paymentId: result.id,
+                userId: paymentData.userId,
+                addressId: paymentData.addressId,
+            });
+            await this.paymentRepo.save(paymentEntity);
+
             return {
                 id: result.id,
                 init_point: result.init_point,
@@ -129,7 +143,21 @@ export class PaymentService {
         this.logger.log('Webhook verificado com sucesso!');
 
         try {
+
             const payment = await new Payment(this.client).get({ id: paymentId });
+
+            if (!payment.metadata || !payment.metadata.userId) {
+                const paymentEntity = await this.paymentRepo.findOneBy({ paymentId: paymentId });
+                if (paymentEntity) {
+                    payment.metadata = {
+                        userId: paymentEntity.userId,
+                        addressId: paymentEntity.addressId,
+                    };
+                } else {
+                    this.logger.error(`Pagamento ${paymentId} não encontrado no banco.`);
+                    return;
+                }
+            }
 
             this.logger.log(`Status do pagamento: ${payment.status}`);
 
