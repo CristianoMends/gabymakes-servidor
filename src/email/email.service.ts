@@ -27,7 +27,7 @@ export class EmailService {
                 name,
                 email,
                 address,
-                purchaseId,
+                orderId: purchaseId,
             },
         });
     }
