@@ -47,7 +47,7 @@ export class PaymentController {
   async getPaymentStatus(
     @Body() dto: PaymentStatusDto
   ) {
-    return this.paymentService.getPaymentDetails(dto.paymentId);
+    return this.paymentService.getPaymentDetails(dto);
   }
 
 }

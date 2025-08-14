@@ -8,11 +8,10 @@ import { EmailModule } from '../email/email.module';
 import { OrderModule } from '../order/order.module';
 import { User } from '../users/entities/user.entity';
 import { Address } from '../address/entities/address.entity';
-import { Payments } from './entity/payments';
 
 @Module({
   imports: [EmailModule, OrderModule,
-    TypeOrmModule.forFeature([Product, User, Address, Payments]),
+    TypeOrmModule.forFeature([Product, User, Address]),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
