@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpStatus, Param, Post, Query, Req, Res } from 
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Response, Request } from 'express';
+import { PaymentStatusDto } from './dto/payment-status.dto';
 
 
 
@@ -29,32 +30,24 @@ export class PaymentController {
     console.log('--- Webhook Recebido ---');
     console.log('Tipo (type):', type);
     console.log('ID do pagamento:', data?.id);
-    console.log('Corpo completo:', req.body);
-    console.log('Cabeçalhos:', req.headers);
-    console.log('------------------------');
 
-    // Sempre responder ao Mercado Pago rapidamente
-    res.sendStatus(HttpStatus.OK);
 
-    // Processar somente eventos do tipo payment
     if (type === 'payment' && data?.id) {
       try {
         await this.paymentService.processWebhook(data.id, req.headers);
+        res.sendStatus(HttpStatus.OK);
       } catch (err) {
         console.error('Erro ao processar webhook:', err);
+        res.sendStatus(HttpStatus.BAD_REQUEST);
       }
     }
   }
 
   @Post('status')
   async getPaymentStatus(
-    @Body() body: {
-      paymentId: string;
-    },
+    @Body() dto: PaymentStatusDto
   ) {
-    return this.paymentService.getPaymentDetails(
-      body.paymentId,
-    );
+    return this.paymentService.getPaymentDetails(dto.paymentId);
   }
 
 }
