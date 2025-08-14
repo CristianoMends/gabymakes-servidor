@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import MercadoPagoConfig, { Payment, Preference } from 'mercadopago';
 import * as crypto from 'crypto';
@@ -36,6 +36,10 @@ export class PaymentService {
 
     async createPaymentPreference(paymentData: CreatePaymentDto) {
         this.logger.log(`Iniciando criação de preferência para ${paymentData.items.length} item(s).`);
+
+        if (!paymentData.userId || !paymentData.addressId) {
+            throw new BadRequestException('userId ou addressId ausentes');
+        }
 
         const itemsParaMercadoPago = await Promise.all(
             paymentData.items.map(async (item) => {
