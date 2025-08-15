@@ -79,22 +79,13 @@ export class ProductsService {
     let isFirstCondition = true;
 
     if (commonSearchTerm) {
-
       queryBuilder.where(
-        `product.description ILIKE :searchTerm`,
-        { searchTerm: `%${commonSearchTerm}%` }
-      );
-
-      queryBuilder.orWhere(
-        `product.brand ILIKE :searchTerm`,
-        { searchTerm: `%${commonSearchTerm}%` }
-      );
-      queryBuilder.orWhere(
-        `product.category ILIKE :searchTerm`,
+        `(product.description ILIKE :searchTerm OR product.brand ILIKE :searchTerm OR product.category ILIKE :searchTerm)`,
         { searchTerm: `%${commonSearchTerm}%` }
       );
       isFirstCondition = false;
     }
+
 
     if (filters.brand) {
       const condition = `product.brand ILIKE :brand`;
@@ -152,5 +143,6 @@ export class ProductsService {
     const results = await queryBuilder.getMany();
     return results;
   }
+  
 
 }

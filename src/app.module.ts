@@ -17,6 +17,7 @@ import { OrderModule } from './order/order.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
+import { TrackingEventsModule } from './tracking-events/tracking-events.module';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -75,6 +76,7 @@ const isProd = process.env.NODE_ENV === 'production';
     PaymentModule,
     EmailModule,
     OrderModule,
+    TrackingEventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
